@@ -8,7 +8,8 @@ import TesseractOCR from './camera/tesseract';
 import TextLocalization from './camera/textLocalization';
 import ImageWebcam from './camera/imageWebcam';
 import TextLocalization2 from './camera/textlocalizationword';
-import ImageUpload from './camera/imageupload';
+import ImageInput from '@/app/opencv/page';
+
 
 
 export default function AnswerKey() {
@@ -27,7 +28,11 @@ export default function AnswerKey() {
   const [ImageData, setImageData] = useState(null);
   const [processedImageData, setProcessedImageData] = useState(null);
   
-  
+  const handleImageSelected = (retrievedImage) => {
+    setImageData(retrievedImage);
+    setProcessedImageData(retrievedImage);
+  };
+
   const handleImageSelect = async (data) => {
     try {
       console.log('Sending image data to server:', data); // Log the image data being sent
@@ -116,12 +121,6 @@ export default function AnswerKey() {
     return romanNumerals[num] || num;
   };
 
- 
-
-  
-  
-
-  
 
   return (
     <main className="container-fluid p-sm-4 py-3 h-100">
@@ -229,7 +228,8 @@ export default function AnswerKey() {
             </div>
           </form>
           <ImageWebcam onImage={handleImageSelect}/>
-          <ImageUpload onImage={handleImageSelect}/>
+           <ImageInput onImageSelected={handleImageSelected} />
+          
           {ImageData && (
             <div>
               <h4>PREVIEW:</h4>
@@ -237,14 +237,14 @@ export default function AnswerKey() {
             </div>
           )}
           {processedImageData && (
-            <div>
-              <h4>Grayscale Preview:</h4>
-              <img src={processedImageData} alt="Grayscale" style={{ maxWidth: '100%' }} />
-            </div>
-          )}
-          <TextLocalization imageData={processedImageData} /> {/* Pass grayscale image */}
-        <TextLocalization2 imageData={processedImageData} /> {/* Pass grayscale image */}
-        <TesseractOCR Image={processedImageData} /> {/* Pass grayscale image */}
+  <div>
+    <h4>Processed Image:</h4>
+    <img src={processedImageData} alt="Processed Image" style={{ maxWidth: '100%' }} />
+  </div>
+)}
+          <TextLocalization imageData={processedImageData} /> 
+        <TextLocalization2 imageData={processedImageData} /> 
+        <TesseractOCR Image={processedImageData} />
         </section>
         {/* END CONTENT */}
       </section>

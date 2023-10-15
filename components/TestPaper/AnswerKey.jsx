@@ -47,17 +47,18 @@ export default function AnswerKey() {
     try {
       // Open the captured image using Jimp
       const image = await Jimp.read(imageSrc);
-
+  
       // Perform image processing operations (grayscale conversion)
-      image
-        .resize(600, 600) // Resize the image
-        .contrast(0.3) // Adjust contrast
-        .greyscale(); // Convert to grayscale
-        
-
+      //image
+      //  .contrast(0.01)
+      //  .brightness(0.28)
+      //  .greyscale()
+      //  .normalize()
+      //.convolute([[0, 1, 0], [1, -4, 1], [0, 1, 0]]);
+  
       // Get the processed image as a base64 data URL
       const processedImageSrc = await image.getBase64Async(Jimp.MIME_JPEG);
-
+  
       return processedImageSrc;
     } catch (error) {
       console.error('Error processing image:', error);

@@ -1,12 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import Jimp from 'jimp';
+import axios from 'axios';
 
 function ImageWebcam({ onImage }) {
   const webcamRef = useRef(null);
   const [webcamEnabled, setWebcamEnabled] = useState(false);
   const [showCropIndicator, setShowCropIndicator] = useState(false);
   const [indicatorPosition, setIndicatorPosition] = useState({ x: 0, y: 0 });
+  const [retrievedImage, setRetrievedImage] = useState(null);
+
 
   useEffect(() => {
     if (webcamEnabled) {
@@ -16,8 +19,8 @@ function ImageWebcam({ onImage }) {
         const buttonRect = button.getBoundingClientRect();
 
         // Calculate the position of the crop indicator relative to the button
-        const indicatorX = buttonRect.left;
-        const indicatorY = buttonRect.top + buttonRect.height;
+        const indicatorX = buttonRect.left + buttonRect.width / 2;
+        const indicatorY = buttonRect.top + buttonRect.height / 2;
 
         // Set the indicator position
         setIndicatorPosition({ x: indicatorX, y: indicatorY });
@@ -29,99 +32,99 @@ function ImageWebcam({ onImage }) {
     }
   }, [webcamEnabled]);
 
-   const capture = async () => {
+
+  const capture = async () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       setWebcamEnabled(true);
-
-      // Convert the cropped image to grayscale
-      const processedImageSrc = await processImage(imageSrc);
-
-      // Call the callback function to pass the processed image data to the parent
-      onImage(processedImageSrc);
+  
+      try {
+        const processedImageSrc = await processImage(imageSrc);
+        console.log(imageSrc)
+        // Post the captured image for processing
+        await postImage(processedImageSrc);
+        console.log(processedImageSrc)
+      } catch (error) {
+        console.error('Error processing and posting image:', error);
+      }
     }
   };
+  
+  // Function to post the processed image to your server
+  const postImage = async (processedImage) => {
+    if (!processedImage) {
+      return;
+    }
+  
+    const formData = new FormData();
+    formData.append('image', processedImage);
+  
+    try {
+      console.log("image processing....", formData)
+      // Adjust the URL to match your server endpoint for posting images
+      await axios.post('http://localhost:3002/post-image', processedImage, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+  
+      // After posting, trigger the getImage function to retrieve the processed image
+      getImage();
+    } catch (error) {
+      console.error('Error posting image:', error);
+    }
+  };
+  
+  // Function to retrieve the processed image from your server
+  const getImage = async () => {
+    try {
+      // Adjust the URL to match your server endpoint for retrieving images
+      const response = await axios.get('http://localhost:3002/get-image', {
+        responseType: 'arraybuffer',
+      });
+  
+      const blob = new Blob([response.data], { type: 'image/jpeg' });
+      const imageUrl = URL.createObjectURL(blob);
+      setRetrievedImage(imageUrl);
+    } catch (error) {
+      console.error('Error getting image:', error);
+    }
+  };
+  
 
   const toggleWebcam = () => {
     setWebcamEnabled(!webcamEnabled);
   };
 
-  const cropImage = async (imageSrc) => {
-    try {
-      // Create a new HTML image element
-      const img = new Image();
-      img.src = imageSrc;
-  
-      // Create a canvas to manipulate the image
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
-  
-      // Set canvas dimensions to match the image
-      canvas.width = img.width;
-      canvas.height = img.height;
-  
-      // Get the reference to the indicator element
-      const indicatorElement = document.querySelector('.crop-indicator');
-  
-      // Calculate cropping coordinates and dimensions based on the indicator
-      const cropX = indicatorElement.offsetLeft; // X coordinate of the indicator
-      const cropY = indicatorElement.offsetTop; // Y coordinate of the indicator
-      const cropWidth = indicatorElement.clientWidth; // Width of the indicator
-      const cropHeight = indicatorElement.clientHeight; // Height of the indicator
-  
-      // Draw the cropped portion onto the canvas
-      context.drawImage(img, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-  
-      // Get the cropped image as a base64 data URL
-      const croppedImageSrc = canvas.toDataURL('image/jpeg');
-  
-      return croppedImageSrc;
-    } catch (error) {
-      console.error('Error cropping image:', error);
-      return imageSrc; // Return the original image if an error occurs
-    }
-  };
-  
+ 
 
   const processImage = async (imageSrc) => {
-    try {
-      // Create a new HTML image element
-      const img = new Image();
-      img.src = imageSrc;
+  try {
+    // Create a new HTML image element
+    const img = new Image();
+    img.src = imageSrc;
 
-      // Create a canvas to manipulate the image
-      const canvas = document.createElement('canvas');
-      const context = canvas.getContext('2d');
+    // Create a canvas to manipulate the image
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
 
-      // Set canvas dimensions to match the image
-      canvas.width = img.width;
-      canvas.height = img.height;
+    // Set canvas dimensions to match the image
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-      // Draw the image onto the canvas
-      context.drawImage(img, 0, 0, img.width, img.height);
+    // Draw the image onto the canvas
+    context.drawImage(img, 0, 0, img.width, img.height);
 
-      // Perform grayscale conversion by iterating through pixels
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imageData.data;
-      for (let i = 0; i < data.length; i += 4) {
-        const gray = (data[i] + data[i + 1] + data[i + 2]) / 3; // Calculate grayscale value
-        data[i] = gray;
-        data[i + 1] = gray;
-        data[i + 2] = gray;
-      }
+    // Get the processed image as a base64 data URL
+    const processedImageSrc = canvas.toDataURL('image/jpeg');
 
-      // Update the canvas with the grayscale data
-      context.putImageData(imageData, 0, 0);
+    return processedImageSrc;
+  } catch (error) {
+    console.error('Error processing image:', error);
+    return imageSrc; // Return the original image if an error occurs
+  }
+};
 
-      // Get the processed image as a base64 data URL
-      const processedImageSrc = canvas.toDataURL('image/jpeg');
-
-      return processedImageSrc;
-    } catch (error) {
-      console.error('Error processing image:', error);
-      return imageSrc; // Return the original image if an error occurs
-    }
-  };
 
   return (
     <div>
@@ -136,12 +139,12 @@ function ImageWebcam({ onImage }) {
               className="crop-indicator"
               style={{
                 position: 'absolute',
-                border: '2px dashed red', // Customize the indicator style
-                top: `${indicatorPosition.y + 55}px`, // Add 5 pixels to the y position
-                left: `${indicatorPosition.x + 65}px`, // Add 5 pixels to the x position
-                width: '400px', // Adjust the size as needed
-                height: '250px', // Adjust the size as needed
-                pointerEvents: 'none', // Make the indicator non-interactive
+                width: '300px', // Adjust the width of the indicator as needed
+                height: '380px', // Adjust the height of the indicator as needed
+                background: 'rgba(0, 0, 0, 0.2)', // Indicator background color
+                border: '2px solid red', // Indicator border style
+                top: `${indicatorPosition.y}px`, // Adjust the position
+                left: `${indicatorPosition.x}px`, // Adjust the position
               }}
             ></div>
           )}

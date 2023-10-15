@@ -20,6 +20,9 @@ export default function TestPaper() {
   const [savedValues, setSavedValues] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [loadedFromLocalStorage, setLoadedFromLocalStorage] = useState(false);
+  const [isSaveButtonDisabled, setSaveButtonDisabled] = useState(true);
+  const [fields, setFields] = useState([]);
+
 
   const generateTestPaper = async () => {
     try {
@@ -75,9 +78,71 @@ export default function TestPaper() {
       },
     ]);
 
+    
+    const [maxScore, setMaxScore] = useState(100); 
+
+  const handleMaxScore = (event) => {
+    let value = event.target.value;
+
+    // Remove non-numeric characters
+    value = value.replace(/[^0-9]/g, "");
+
+    // Ensure the value is within the range [10, 100]
+    value = Math.min(Math.max(10, parseInt(value) || 10), 100);
+
+    setMaxScore(value); // Use setMaxScore to update the state
+    const localStorageKey4 = `maxScore_${tupcids}_${classcode}_${uid}`;
+  localStorage.setItem(localStorageKey4, value);
+  };
+
+  const [totalScore, setTotalScore] = useState(0);
+  const [scoreDifference, setScoreDifference] = useState(0);
+
+  // Function to calculate and update the total score
+  const updateTotalScore = () => {
+    const newTotalScore = fields.reduce((acc, field) => {
+      const originalScore = parseInt(field.score) || 0;
+      const copiedScore = field.copiedFields.reduce((copiedAcc, copiedField) => {
+        return copiedAcc + (parseInt(copiedField.score) || 0);
+      }, 0);
+      return acc + originalScore + copiedScore;
+    }, 0);
+    
+    // Calculate the score difference and update the state
+    const newScoreDifference = maxScore - newTotalScore;
+    setScoreDifference(newScoreDifference);
+    setTotalScore(newTotalScore);
+    
+    
+  };
+  
+  useEffect(() => {
+    // Update the total score whenever the fields change
+    updateTotalScore();
+  }, [fields]);
+
+   
+  useEffect(() => {
+    // Retrieve totalScore and scoreDifference from local storage
+    const savedTotalScore = localStorage.getItem('totalScore');
+    const savedScoreDifference = localStorage.getItem('scoreDifference');
+    
+    // Check if the values exist in local storage
+    if (savedTotalScore !== null && savedScoreDifference !== null) {
+      // Update the state with the retrieved values
+      setTotalScore(parseInt(savedTotalScore));
+      setScoreDifference(parseInt(savedScoreDifference));
+    }
+  }, []);
+  
+  
+    
+
     const localStorageKey = `testPaperData_${tupcids}_${classcode}_${uid}`;
     const localStorageKey2 = `TData_${tupcids}_${classcode}_${uid}`;
     const localStorageKey3 = `QData_${tupcids}_${classcode}_${uid}`;
+    const localStorageKey4 = `sData_${tupcids}_${classcode}_${uid}`;
+    
 
     useEffect(() => {
       const savedData = localStorage.getItem(localStorageKey);
@@ -98,7 +163,7 @@ export default function TestPaper() {
         return [1];
       }
     });
-
+   
     // Modified code to save and retrieve fieldQuestionNumbers
     const [fieldQuestionNumbers, setFieldQuestionNumbers] = useState(() => {
       if (typeof localStorage !== "undefined") {
@@ -122,9 +187,19 @@ export default function TestPaper() {
       );
     }, [fieldTitleNumbers, fieldQuestionNumbers]);
 
+    // Create a useEffect to save the scores
+useEffect(() => {
+  // Save the scores to local storage
+  localStorage.setItem(localStorageKey4, JSON.stringify({ totalScore, scoreDifference }));
+}, [totalScore, scoreDifference]);
+
+    
+  
+
     const addNewField = () => {
       console.log("field eme...", fieldTitleNumbers.length);
-      if (fieldTitleNumbers.length >= 3) {
+      if (fieldTitleNumbers.length > 2) {
+        alert("Already reach the maximum type of test")
         return;
       }
 
@@ -161,10 +236,13 @@ export default function TestPaper() {
           TFOptions: [{ label: "TRUE" }, { label: "FALSE" }],
         },
       ]);
+     
+      updateTotalScore();
+      
       setFieldTitleNumbers((prevNumbers) => [...prevNumbers, newFieldNumber]);
       setFieldQuestionNumbers((prevNumbers) => [...prevNumbers, 1]);
     };
-
+    
     const getExistingQuestionTypes = (currentFieldIndex) => {
       const existingTypes = new Set();
 
@@ -178,17 +256,18 @@ export default function TestPaper() {
     };
 
     const handleFieldChange = (index, field) => {
+      
       const updatedFields = [...fields];
-      updatedFields[index] = field;
-
+    
+      // Ensure the score is at least 1
+      const score = Math.min(Math.max(1, parseInt(field.score) || 1), 10);
+      updatedFields[index] = { ...field, score: score };
+    
       if (field.questionType && field.questionType.value === "TrueFalse") {
         updatedFields[index].answer = field.answer;
-      } else if (
-        field.questionType &&
-        field.questionType.value === "MultipleChoice"
-      ) {
+      } else if (field.questionType && field.questionType.value === "MultipleChoice") {
         updatedFields[index].answer = field.answer;
-
+    
         // Update the answer for each option
         updatedFields[index].MCOptions.forEach((option, optionIndex) => {
           if (option.label === field.answer) {
@@ -198,28 +277,44 @@ export default function TestPaper() {
       } else {
         updatedFields[index].answer = field.answer;
       }
+    
+      // Update the score for copied fields when changing the score in the original field
+      updatedFields[index].copiedFields.forEach((copiedField) => {
+        copiedField.score = score;
+      });
+    
       setFields(updatedFields);
+    
+      // Calculate the current score
+      updateTotalScore();
+      setSaveButtonDisabled(false);
+     
+    
     };
+    
 
+    
     const addRadioOption = (index, copiedIndex) => {
       const updatedFields = [...fields];
       if (copiedIndex === undefined) {
         if (!updatedFields[index].MCOptions) {
           updatedFields[index].MCOptions = [];
         }
-        if (updatedFields[index].MCOptions.length < 26) {
+        if (updatedFields[index].MCOptions.length < 5) {
           const newOption = String.fromCharCode(
             65 + updatedFields[index].MCOptions.length
           );
           updatedFields[index].MCOptions.push({ label: newOption, text: "" });
           setFields(updatedFields);
+        } else {
+          console.error("Cannot add more options. Maximum of 5 options allowed.");
         }
       } else {
         if (!updatedFields[index].copiedFields[copiedIndex].MCOptions) {
           updatedFields[index].copiedFields[copiedIndex].MCOptions = [];
         }
         if (
-          updatedFields[index].copiedFields[copiedIndex].MCOptions.length < 26
+          updatedFields[index].copiedFields[copiedIndex].MCOptions.length < 5
         ) {
           const newOption = String.fromCharCode(
             65 + updatedFields[index].copiedFields[copiedIndex].MCOptions.length
@@ -229,38 +324,33 @@ export default function TestPaper() {
             text: "",
           });
           setFields(updatedFields);
+        } else {
+          console.error("Cannot add more options. Maximum of 5 options allowed.");
         }
       }
     };
-
+  
     const subtractRadioOption = (index, copiedIndex) => {
       const updatedFields = [...fields];
-
+      
       if (copiedIndex === undefined) {
-        // Subtract an option from the original field
-        if (updatedFields[index].MCOptions.length > 4) {
+        if (updatedFields[index].MCOptions.length > 3) {
           updatedFields[index].MCOptions.pop();
         } else {
-          console.error(
-            "Cannot subtract option. Minimum of 4 options required."
-          );
+          console.error("Cannot subtract option. Minimum of 3 options required.");
         }
       } else if (
         updatedFields[index].copiedFields &&
         updatedFields[index].copiedFields[copiedIndex].MCOptions
       ) {
-        // Subtract an option from a copied field
         if (
-          updatedFields[index].copiedFields[copiedIndex].MCOptions.length > 4
+          updatedFields[index].copiedFields[copiedIndex].MCOptions.length > 3
         ) {
           updatedFields[index].copiedFields[copiedIndex].MCOptions.pop();
         } else {
-          console.error(
-            "Cannot subtract option. Minimum of 4 options required."
-          );
+          console.error("Cannot subtract option. Minimum of 3 options required.");
         }
       }
-
       setFields(updatedFields);
     };
 
@@ -294,67 +384,90 @@ export default function TestPaper() {
     };
 
     const handleCopyField = (index, copiedIndex) => {
-      const copiedField = { ...fields[index].copiedFields[copiedIndex] };
       const updatedFields = [...fields];
-      if (!updatedFields[index].copiedFields) {
-        updatedFields[index].copiedFields = [];
-      }
-      updatedFields[index].copiedFields[copiedIndex] = {
-        ...fields[index].copiedFields[copiedIndex],
-        copiedFields: [...(copiedField.copiedFields || [])],
-        MCOptions: [
+      const copiedField = {
+        ...fields[index], // Copy properties from the original field
+        question: "", // Reset the question for the copied field
+        answer: "", // Reset the answer for the copied field
+        copiedFields: [],
+      };
+    
+      // If the question type is "MultipleChoice," initialize MCOptions with default choices
+      if (copiedField.questionType.value === "MultipleChoice") {
+        copiedField.MCOptions = [
           { label: "A", text: "" },
           { label: "B", text: "" },
           { label: "C", text: "" },
           { label: "D", text: "" },
-        ], // Initialize MCOptions with default values
-      };
-
-      if (
-        fields[index].questionType &&
-        fields[index].questionType.value === "MultipleChoice"
-      ) {
-        updatedFields[index].copiedFields[copiedIndex].answer =
-          copiedField.answer;
+        ];
       }
-
+    
+      if (!updatedFields[index].copiedFields) {
+        updatedFields[index].copiedFields = [];
+      }
+      updatedFields[index].copiedFields.splice(copiedIndex + 1, 0, copiedField);
+    
       setFields(updatedFields);
+    
+      // Update the total score when copying an empty field
+      updateTotalScore();
+      
+      
+    };
+    
+    
+    
+
+    const shuffleArray = (array) => {
+      const shuffledArray = [...array];
+      for (let i = shuffledArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledArray[i], shuffledArray[j]] = [shuffledArray[j], shuffledArray[i]];
+      }
+      return shuffledArray;
     };
 
     const handleCopyFieldData = (index, copiedIndex) => {
       const updatedFields = [...fields];
-
+  
       if (!updatedFields[index].copiedFields) {
         updatedFields[index].copiedFields = [];
       }
-
-      const sourceQuestion =
-        copiedIndex === undefined
-          ? updatedFields[index]
-          : updatedFields[index].copiedFields[copiedIndex];
-
+  
+      const sourceQuestion = copiedIndex === undefined ? updatedFields[index] : updatedFields[index].copiedFields[copiedIndex];
+  
+      const originalLabels = sourceQuestion.MCOptions.map(option => option.label);
+      const shuffledLabels = shuffleArray(originalLabels);
+  
+      // Ensure the shuffled labels are different from the original order
+      while (shuffledLabels.every((label, i) => label === originalLabels[i])) {
+        shuffleArray(shuffledLabels);
+      }
+  
+      // Create a new set of MCOptions with shuffled text but original labels
+      const shuffledMCOptions = sourceQuestion.MCOptions.map((option, optionIndex) => ({
+        label: option.label,
+        text: sourceQuestion.MCOptions.find(originalOption => originalOption.label === shuffledLabels[optionIndex]).text,
+      }));
+  
       const copiedData = {
         questionType: sourceQuestion.questionType,
         question: sourceQuestion.question,
         answer: sourceQuestion.answer,
         score: sourceQuestion.score,
-        MCOptions: sourceQuestion.MCOptions.map((option) => ({ ...option })), // Deep copy MCOptions
-        TFOptions: sourceQuestion.TFOptions.map((option) => ({ ...option })), // Deep copy TFOptions
+        MCOptions: shuffledMCOptions,
+        TFOptions: sourceQuestion.TFOptions.map(option => ({ ...option })), // Deep copy TFOptions
       };
-
+  
       if (copiedIndex === undefined) {
         updatedFields[index].copiedFields.splice(index, 0, copiedData);
       } else {
-        updatedFields[index].copiedFields.splice(
-          copiedIndex + 1,
-          0,
-          copiedData
-        );
+        updatedFields[index].copiedFields.splice(copiedIndex + 1, 0, copiedData);
       }
-
+  
       setFields(updatedFields);
     };
-
+    
     const handleReset = (index, copiedIndex) => {
       const updatedFields = [...fields];
       if (copiedIndex === undefined) {
@@ -425,16 +538,22 @@ export default function TestPaper() {
       setFields(updatedFields);
     };
 
+    
     const handleSave = async () => {
       const localStorageKey = `testPaperData_${tupcids}_${classcode}_${uid}`;
+
+      
+
       const savedData = JSON.parse(
         localStorage.getItem(localStorageKey) || "[]"
-      ); // Load existing data from local storage or initialize as an empty array
-
+      ); 
+ 
       const typeScores = {};
       localStorage.setItem(localStorageKey, JSON.stringify(fields));
 
       const updatedSavedValues = [];
+
+      
 
       fields.forEach((field, index) => {
         const questionData = {
@@ -510,14 +629,21 @@ export default function TestPaper() {
         }
       });
 
-      const totalScore = updatedSavedValues.reduce(
-        (total, data) => total + data.score,
-        0
-      );
-      typeScores["Total Score"] = totalScore;
-      updatedSavedValues.push(typeScores);
+      const totalScore = updatedSavedValues.reduce((total, data) => total + data.score, 0);
+  const scoreDifference = maxScore - totalScore;
+  const typeScores2 = { 'Total Score': totalScore };
+  updatedSavedValues.push(typeScores2);
+
+  // Save data to local storage
+  localStorage.setItem(localStorageKey4, JSON.stringify(updatedSavedValues));
+  localStorage.setItem('totalScore', totalScore);
+  localStorage.setItem('scoreDifference', scoreDifference);
+
+  // Disable the save button
+  setSaveButtonDisabled(true);
 
       setSavedValues(updatedSavedValues);
+       
 
       try {
         console.log("DATA SENDING....", updatedSavedValues);
@@ -586,24 +712,47 @@ export default function TestPaper() {
             setErrorMessage("Error updating data. Please try again.");
           }
         }
+    setSaveButtonDisabled(true);
+   
       } catch (error) {
         console.error("Error saving/updating data:", error);
         setErrorMessage("Error saving/updating data. Please try again.");
       }
+    
+      
+      
+     
     };
 
+    
+    
+    
     //beta testing document
 
     return (
       <div className="d-flex flex-column justify-content-center align-items-center container-sm col-lg-8 col-11 border border-dark rounded py-2">
         {fields.map((field, index) => (
-          <fieldset
-            className="row col-lg-9 col-11 justify-content-center"
-            key={index}
-          >
-            <legend className="p-0">TYPE {fieldTitleNumbers[index]}</legend>
+          <fieldset className="row col-lg-9 col-11 justify-content-center" key={index}>
+            <legend className="p-0">
+              TYPE {fieldTitleNumbers[index]}
+              <p>
+                Score: {totalScore}/{maxScore}
+              </p>
+              <label>TOTAL SCORE:</label>
+              <select value={maxScore} onChange={handleMaxScore}>
+                {/* Create options from 10 to 100 in increments of 5 */}
+                {Array.from({ length: (100 - 10) / 5 + 1 }, (_, optionIndex) => (
+                  <option key={optionIndex} value={10 + optionIndex * 5}>
+                    {10 + optionIndex * 5}
+                  </option>
+                ))}
+              </select>
+            </legend>
             <div className="row align-items-center p-0">
+            
               <span className="col-2 p-0 ">TYPE OF TEST:</span>
+          
+
               <Select
                 className="col-8"
                 options={questionTypes.filter(
@@ -625,6 +774,7 @@ export default function TestPaper() {
                   handleFieldChange(index, { ...field, score: e.target.value })
                 }
               />
+
             </div>
 
             <div className="col-12 p-0">
@@ -696,6 +846,7 @@ export default function TestPaper() {
                     />
                   </div>
                 ))}
+                 
                 <div className="d-flex gap-2 mb-1">
                   <button
                     onClick={() => addRadioOption(index)}
@@ -923,11 +1074,13 @@ export default function TestPaper() {
               </div>
             )}
             <div className="d-flex mb-1 mt-1 gap-1">
+              
               <button
                 className="py-1 px-3 border border-dark rounded"
                 onClick={() =>
                   handleCopyField(index, field.copiedFields.length)
                 }
+                disabled={scoreDifference <= 0}
               >
                 Add new Test
               </button>
@@ -941,6 +1094,11 @@ export default function TestPaper() {
             </div>
           </fieldset>
         ))}
+       <div>
+      <p>Remaining Score: {scoreDifference}</p>
+    </div>
+
+    {errorMessage && <p className="error-message">{errorMessage}</p>}       
         <div className="d-flex gap-2">
           <button
             className="py-1 px-3 border border-dark rounded"
@@ -949,11 +1107,14 @@ export default function TestPaper() {
             Add New Type
           </button>
           <button
-            className="py-1 px-3 border border-dark rounded"
-            onClick={handleSave}
-          >
-            Save All
-          </button>
+  className="py-1 px-3 border border-dark rounded"
+  onClick={handleSave}
+  disabled={isSaveButtonDisabled || scoreDifference !== 0 || fields.some((f) => !f.question || !f.answer)}
+>
+  Save All
+</button>
+
+
         </div>
         <div className="d-flex gap-1 mt-1">
           <button

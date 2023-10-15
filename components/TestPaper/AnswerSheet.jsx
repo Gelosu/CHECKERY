@@ -21,10 +21,10 @@ export default function AnswerSheet() {
 
 
 
-  const generateAnswerSheet = async (uid) => {
+  const generateAnswerSheet = async (uid,classcode) => {
     try {
       // Send a GET request to your endpoint
-      const response = await fetch(`http://localhost:3001/generateAnswerSheet/${uid}`);
+      const response = await fetch(`http://localhost:3001/generateAnswerSheet/${uid}/${classcode}`);
   
       if (response.ok) {
         // Trigger the download of the generated PDF
@@ -43,7 +43,7 @@ export default function AnswerSheet() {
   };
 
   const handleGenerateAnswerSheet = () => {
-    generateAnswerSheet(uid);
+    generateAnswerSheet(uid,classcode);
   };
   
 

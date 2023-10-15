@@ -11,7 +11,7 @@ const uuid = require('uuid');
 const officegen = require('officegen');
 const romanize = require('romanize');
 const PDFDocument = require('pdfkit');
-const sharp = require('sharp');
+
 
 
 const app = express();
@@ -1949,86 +1949,146 @@ app.get('/getquestionstypeandnumber/:tupcids/:uid', async (req, res) => {
     
 
 
-app.get('/generateAnswerSheet/:uid', async (req, res) => {
+app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
   try {
-    const { uid } = req.params; // Extract parameters from URL
+    const { uid, classcode } = req.params; // Extract parameters from URL
 
     // Fetch data from the database based on the parameters
-    const query = `
-      SELECT questions, test_number, test_name FROM testforstudents WHERE uid = ?;
+
+    // Query 1: Fetch data from the 'testforstudents' table
+    const query1 = `
+      SELECT questions, test_number, test_name
+      FROM testforstudents
+      WHERE uid = ?;
     `;
-    console.log("response....", uid);
-    const [testdata] = await connection.query(query, [uid]);
+    
+    // Query 2: Fetch data from the 'enrollments' and 'student_accounts' tables
+    const query2 = `
+      SELECT e.TUPCID, s.FIRSTNAME, s.MIDDLENAME, s.SURNAME
+      FROM enrollments e
+      INNER JOIN student_accounts s ON e.TUPCID = s.TUPCID
+      WHERE e.class_code = ?;
+    `;
 
-    // Extract the questions, test_number, and test_name from the database response
-    const test_number = testdata[0].test_number;
-    const test_name = testdata[0].test_name;
+    // Execute the first query to fetch data from 'testforstudents'
+    const [testData] = await connection.query(query1, [uid]);
 
-    console.log("testname...", test_name);
-    console.log("testnumber...", test_number);
+    // Execute the second query to fetch data from 'enrollments' and 'student_accounts'
+    const [studentData] = await connection.query(query2, [classcode]);
 
     // Create a new PDF document
     const doc = new PDFDocument();
     const filename = `Answer_Sheet.pdf`;
 
-    // Set the title based on TEST NUMBER and TEST NAME
-    const title = doc.text(`${test_number} : ${test_name} UID: ${uid}`, {
-      bold: true,
-      fontSize: 24,
-      align: 'center',
-    });
+    // Define the box size and spacing
+    const boxSize = 18;
+    const boxSpacing = 1;
 
-    // Create an object to store questions grouped by questionType
-    const groupedQuestions = {};
+    // Define the number of boxes per question
+    const boxesPerQuestion = 10;
+    
+    // Define the line weight for boxes
+    const boxLineWeight = 0.15;
 
-    // Group questions by questionType
-    const questionsData = testdata[0].questions;
-    questionsData.forEach((item) => {
-      const questionType = item.questionType;
+    // Iterate through studentData and add each student's information and answer sheet
+    for (const student of studentData) {
+      // Extract student information
+      const { TUPCID, FIRSTNAME, MIDDLENAME, SURNAME } = student;
 
-      // Check if questionType is defined and not empty
-      if (questionType) {
-        if (!groupedQuestions[questionType]) {
-          groupedQuestions[questionType] = [];
+      // Add student information to the PDF
+      doc.text(`${TUPCID}`, { bold: true });
+      doc.text(`${SURNAME}, ${FIRSTNAME}`, { bold: true });
+      doc.moveDown(); // Move to the next line
+
+      // Extract the questions, test_number, and test_name from the database response
+      const test_number = testData[0].test_number;
+      const test_name = testData[0].test_name;
+
+      // Set the title based on TEST NUMBER and TEST NAME
+      const title = doc.text(`${test_number} : ${test_name} UID: ${uid}`, {
+        bold: true,
+        fontSize: 24,
+        align: 'center',
+      });
+      doc.moveDown();
+
+      // Create an object to store questions grouped by questionType
+      const groupedQuestions = {};
+
+      // Group questions by questionType
+      const questionsData = testData[0].questions;
+      questionsData.forEach((item) => {
+        const questionType = item.questionType;
+
+        // Check if questionType is defined and not empty
+        if (questionType) {
+          if (!groupedQuestions[questionType]) {
+            groupedQuestions[questionType] = [];
+          }
+          // Push question numbers only (you can customize this)
+          groupedQuestions[questionType].push({ questionNumber: item.questionNumber });
         }
-        // Push question numbers only (you can customize this)
-        groupedQuestions[questionType].push({ questionNumber: item.questionNumber });
+      });
+
+      // Create a counter to track the number of unique question types
+      let testCounter = 1;
+      const boxStrokeColor = '#e8f4f8'; 
+
+      // Iterate through the grouped questions and add them to the PDF document
+      for (const questionType in groupedQuestions) {
+        const questionsOfType = groupedQuestions[questionType];
+        if (questionsOfType.length > 0) {
+          const romanNumeral = romanize(testCounter); // Convert the index to a Roman numeral
+
+          // Determine the display text based on question type
+          let displayText = '';
+          if (questionType === 'MultipleChoice') {
+            displayText = 'Multiple Choice';
+          } else if (questionType === 'TrueFalse') {
+            displayText = 'TRUE or FALSE';
+          } else if (questionType === 'Identification') {
+            displayText = 'Identification';
+          }
+
+          doc.text(`TEST ${romanNumeral}. ${displayText}`, {
+            bold: true,
+            fontSize: 16,
+          });
+
+          let questionNumber = 1; // Initialize question number
+         
+
+          questionsOfType.forEach(() => {
+            // Add question number
+            doc.text(`${questionNumber}.`, {
+              bold: true,
+              align: 'left',
+              
+            });
+
+             // Set the border color for the boxes
+      doc.strokeColor(boxStrokeColor); // Change the border color here
+
+      // Draw boxes with the specified border color and decreased line weight
+      for (let i = 1; i <= boxesPerQuestion; i++) {
+        doc.rect(doc.x + i * (boxSize + boxSpacing), doc.y, boxSize, boxSize).lineWidth(boxLineWeight).stroke();
       }
+
+      // Reset the border color to the default (black)
+      doc.strokeColor('black');
+
+      doc.moveDown(); // Move to the next line
+      questionNumber++;
     });
 
-    // Create a counter to track the number of unique question types
-    let testCounter = 1;
+    testCounter++;
+    doc.moveDown(); // Increment test counter for the next type
+  }
+}
 
-    // Iterate through the grouped questions and add them to the PDF document
-    for (const questionType in groupedQuestions) {
-      const questionsOfType = groupedQuestions[questionType];
-      if (questionsOfType.length > 0) {
-        const romanNumeral = romanize(testCounter); // Convert the index to a Roman numeral
-
-        // Determine the display text based on question type
-        let displayText = '';
-        if (questionType === 'MultipleChoice') {
-          displayText = 'Multiple Choice';
-        } else if (questionType === 'TrueFalse') {
-          displayText = 'TRUE or FALSE';
-        } else if (questionType === 'Identification') {
-          displayText = 'Identification';
-        }
-
-        doc.text(`TEST ${romanNumeral}. ${displayText}`, {
-          bold: true,
-          fontSize: 16,
-        });
-
-        let questionNumber = 1; // Initialize question number
-
-        questionsOfType.forEach((questionData) => {
-          doc.text(`${questionNumber}`);
-
-          questionNumber++; // Increment question number
-        });
-
-        testCounter++; // Increment test counter for the next type
+      // Add a page break for the next student (except for the last one)
+      if (student !== studentData[studentData.length - 1]) {
+        doc.addPage();
       }
     }
 
@@ -2044,6 +2104,9 @@ app.get('/generateAnswerSheet/:uid', async (req, res) => {
     res.status(500).send('Error generating Answer Sheet');
   }
 });
+
+
+
 
 //for answerkey
 app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) => {
@@ -2091,34 +2154,6 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
-
-//for sharping image
-app.use(express.json({ limit: '1gb' }));
-app.use(express.urlencoded({ limit: '1gb', extended: true }));
-
-
-
-app.post('/process-image', async (req, res) => {
-  try {
-    // Get the image data from the request body (assuming it's a base64-encoded image)
-    const { imageData } = req.body;
-
-    // Process the image using sharp (ensure the image is in JPEG format)
-    const processedImageData = await sharp(Buffer.from(imageData, 'base64'))
-      .jpeg() // Ensure the output format is JPEG
-      .resize(200, 200) // Adjust the size as needed
-      .toBuffer();
-
-    // Send the processed image as a response
-    res.setHeader('Content-Type', 'image/jpeg');
-    res.status(200).send(processedImageData);
-  } catch (error) {
-    console.error('Error processing image:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-
 
 
 

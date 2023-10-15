@@ -63,8 +63,10 @@ function TextLocalization2({ imageData }) {
       setLocalizedImageData(data.text);
       setLocalizedImageWithBoxes(imageWithBoxes);
       setLocalizedText(data.words.map((word) => word.text).join(' '));
+      console.log('Localized Text:', data.text);
+      
     };
-
+    
     await worker.terminate();
   };
 

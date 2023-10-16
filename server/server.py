@@ -23,6 +23,7 @@ def post_image():
         return jsonify({'error': 'No selected image'})
 
     if image:
+        # Save the image with the name 'image_original.jpg'
         filename = os.path.join(app.config['UPLOAD_FOLDER'], 'image_original.jpg')
         image.save(filename)
 

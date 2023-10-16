@@ -74,12 +74,12 @@ export default function TestPaper() {
           { label: "C", text: "" },
           { label: "D", text: "" },
         ],
-        TFOptions: [{ label: "TRUE" }, { label: "FALSE" }],
+        TFOptions: [{ label: "T" }, { label: "F" }],
       },
     ]);
 
     
-    const [maxScore, setMaxScore] = useState(100); 
+    const [maxScore, setMaxScore] = useState(10); 
 
   const handleMaxScore = (event) => {
     let value = event.target.value;
@@ -88,11 +88,10 @@ export default function TestPaper() {
     value = value.replace(/[^0-9]/g, "");
 
     // Ensure the value is within the range [10, 100]
-    value = Math.min(Math.max(10, parseInt(value) || 10), 100);
+    value = Math.min(Math.max(1, parseInt(value) || 10), 100);
 
     setMaxScore(value); // Use setMaxScore to update the state
-    const localStorageKey4 = `maxScore_${tupcids}_${classcode}_${uid}`;
-  localStorage.setItem(localStorageKey4, value);
+    
   };
 
   const [totalScore, setTotalScore] = useState(0);
@@ -122,21 +121,6 @@ export default function TestPaper() {
   }, [fields]);
 
    
-  useEffect(() => {
-    // Retrieve totalScore and scoreDifference from local storage
-    const savedTotalScore = localStorage.getItem('totalScore');
-    const savedScoreDifference = localStorage.getItem('scoreDifference');
-    
-    // Check if the values exist in local storage
-    if (savedTotalScore !== null && savedScoreDifference !== null) {
-      // Update the state with the retrieved values
-      setTotalScore(parseInt(savedTotalScore));
-      setScoreDifference(parseInt(savedScoreDifference));
-    }
-  }, []);
-  
-  
-    
 
     const localStorageKey = `testPaperData_${tupcids}_${classcode}_${uid}`;
     const localStorageKey2 = `TData_${tupcids}_${classcode}_${uid}`;
@@ -187,14 +171,6 @@ export default function TestPaper() {
       );
     }, [fieldTitleNumbers, fieldQuestionNumbers]);
 
-    // Create a useEffect to save the scores
-useEffect(() => {
-  // Save the scores to local storage
-  localStorage.setItem(localStorageKey4, JSON.stringify({ totalScore, scoreDifference }));
-}, [totalScore, scoreDifference]);
-
-    
-  
 
     const addNewField = () => {
       console.log("field eme...", fieldTitleNumbers.length);
@@ -233,7 +209,7 @@ useEffect(() => {
             { label: "C", text: "" },
             { label: "D", text: "" },
           ],
-          TFOptions: [{ label: "TRUE" }, { label: "FALSE" }],
+          TFOptions: [{ label: "T" }, { label: "F" }],
         },
       ]);
      
@@ -533,7 +509,7 @@ useEffect(() => {
           { label: "C", text: "" },
           { label: "D", text: "" },
         ],
-        TFOptions: [{ label: "TRUE" }, { label: "FALSE" }],
+        TFOptions: [{ label: "T" }, { label: "F" }],
       };
       setFields(updatedFields);
     };
@@ -634,12 +610,7 @@ useEffect(() => {
   const typeScores2 = { 'Total Score': totalScore };
   updatedSavedValues.push(typeScores2);
 
-  // Save data to local storage
-  localStorage.setItem(localStorageKey4, JSON.stringify(updatedSavedValues));
-  localStorage.setItem('totalScore', totalScore);
-  localStorage.setItem('scoreDifference', scoreDifference);
-
-  // Disable the save button
+ 
   setSaveButtonDisabled(true);
 
       setSavedValues(updatedSavedValues);
@@ -739,14 +710,15 @@ useEffect(() => {
                 Score: {totalScore}/{maxScore}
               </p>
               <label>TOTAL SCORE:</label>
-              <select value={maxScore} onChange={handleMaxScore}>
-                {/* Create options from 10 to 100 in increments of 5 */}
-                {Array.from({ length: (100 - 10) / 5 + 1 }, (_, optionIndex) => (
-                  <option key={optionIndex} value={10 + optionIndex * 5}>
-                    {10 + optionIndex * 5}
-                  </option>
-                ))}
-              </select>
+              <input
+  type="number"
+  placeholder="Max Score (1-100)"
+  value={maxScore}
+  onChange={handleMaxScore}
+  min="10"
+  max="100"
+/>
+
             </legend>
             <div className="row align-items-center p-0">
             

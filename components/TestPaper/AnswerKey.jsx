@@ -33,45 +33,7 @@ export default function AnswerKey() {
     setProcessedImageData(retrievedImage);
   };
 
-  const handleImageSelect = async (data) => {
-    try {
-      console.log('Sending image data to server:', data); // Log the image data being sent
-
-      // Perform image processing using Jimp (grayscale conversion)
-      const processedImageSrc = await processImage(data);
-
-      // Call the callback function to pass the processed image data to the parent
-      setProcessedImageData(processedImageSrc);
-      setImageData(data); // Update the original image data
-    } catch (error) {
-      console.error('Error processing image:', error);
-    }
-  };
-
-  const processImage = async (imageSrc) => {
-    try {
-      // Open the captured image using Jimp
-      const image = await Jimp.read(imageSrc);
-  
-      // Perform image processing operations (grayscale conversion)
-      //image
-      //  .contrast(0.01)
-      //  .brightness(0.28)
-      //  .greyscale()
-      //  .normalize()
-      //.convolute([[0, 1, 0], [1, -4, 1], [0, 1, 0]]);
-  
-      // Get the processed image as a base64 data URL
-      const processedImageSrc = await image.getBase64Async(Jimp.MIME_JPEG);
-  
-      return processedImageSrc;
-    } catch (error) {
-      console.error('Error processing image:', error);
-      return imageSrc; // Return the original image if an error occurs
-    }
-  };
-
-
+ 
   const fetchQuestionData = async () => {
     try {
       const response = await axios.get(
@@ -227,7 +189,6 @@ export default function AnswerKey() {
               ))}
             </div>
           </form>
-          <ImageWebcam onImage={handleImageSelect}/>
            <ImageInput onImageSelected={handleImageSelected} />
           
           {ImageData && (
@@ -236,12 +197,7 @@ export default function AnswerKey() {
               <img src={ImageData} alt="Selected" style={{ maxWidth: '100%' }} />
             </div>
           )}
-          {processedImageData && (
-  <div>
-    <h4>Processed Image:</h4>
-    <img src={processedImageData} alt="Processed Image" style={{ maxWidth: '100%' }} />
-  </div>
-)}
+  
           <TextLocalization imageData={processedImageData} /> 
         <TextLocalization2 imageData={processedImageData} /> 
         <TesseractOCR Image={processedImageData} />

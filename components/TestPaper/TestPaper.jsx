@@ -23,35 +23,67 @@ export default function TestPaper() {
   const [isSaveButtonDisabled, setSaveButtonDisabled] = useState(true);
   const [fields, setFields] = useState([]);
 
-
-  const generateTestPaper = async () => {
-    try {
-      const response = await fetch(
-        `http://localhost:3001/generateTestPaper/${uid}`
-      );
-
-      if (response.ok) {
-        // Trigger the download of the generated PDF
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${testname}_testpaper.pdf`;
-        a.click();
-      } else {
-        console.error("Failed to generate PDF.");
+  const generateTestPaperdoc = async () => {
+    const generateWord = document.getElementById("generateWord").checked;
+    const generatePDF = document.getElementById("generatePDF").checked;
+  
+    if (!generateWord && !generatePDF) {
+      // If neither checkbox is checked, show an alert
+      alert("Please check at least one option (Word or PDF) before downloading the file.");
+    } else {
+      if (generateWord) {
+        // Generate and download the Word document as before
+        try {
+          const response = await fetch(
+            `http://localhost:3001/generateTestPaperdoc/${uid}`
+          );
+  
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${testname}_testpaper.docx`;
+            a.click();
+          } else {
+            console.error("Failed to generate Word document.");
+          }
+        } catch (error) {
+          console.error("Error generating Word document:", error);
+        }
       }
-    } catch (error) {
-      console.error("Error generating PDF:", error);
+  
+      if (generatePDF) {
+        // Generate and download the PDF document as before
+        try {
+          const response = await fetch(
+            `http://localhost:3001/generateTestPaperpdf/${uid}`
+          );
+  
+          if (response.ok) {
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${testname}_testpaper.pdf`;
+            a.click();
+          } else {
+            console.error("Failed to generate PDF.");
+          }
+        } catch (error) {
+          console.error("Error generating PDF:", error);
+        }
+      }
     }
   };
-
-  const handleSaveToPDF = () => {
+  
+  const handleSaveToDocsAndPDF = () => {
     const localStorageKey = `testPaperData_${tupcids}_${classcode}_${uid}`;
     const savedData = JSON.parse(localStorage.getItem(localStorageKey) || "[]");
-
-    generateTestPaper(savedData);
+  
+    generateTestPaperdoc(savedData);
   };
+  
   // Load data from localStorage when the component mounts
 
   const questionTypes = [
@@ -78,54 +110,10 @@ export default function TestPaper() {
       },
     ]);
 
-    
-    const [maxScore, setMaxScore] = useState(10); 
-
-  const handleMaxScore = (event) => {
-    let value = event.target.value;
-
-    // Remove non-numeric characters
-    value = value.replace(/[^0-9]/g, "");
-
-    // Ensure the value is within the range [10, 100]
-    value = Math.min(Math.max(1, parseInt(value) || 10), 100);
-
-    setMaxScore(value); // Use setMaxScore to update the state
-    
-  };
-
-  const [totalScore, setTotalScore] = useState(0);
-  const [scoreDifference, setScoreDifference] = useState(0);
-
-  // Function to calculate and update the total score
-  const updateTotalScore = () => {
-    const newTotalScore = fields.reduce((acc, field) => {
-      const originalScore = parseInt(field.score) || 0;
-      const copiedScore = field.copiedFields.reduce((copiedAcc, copiedField) => {
-        return copiedAcc + (parseInt(copiedField.score) || 0);
-      }, 0);
-      return acc + originalScore + copiedScore;
-    }, 0);
-    
-    // Calculate the score difference and update the state
-    const newScoreDifference = maxScore - newTotalScore;
-    setScoreDifference(newScoreDifference);
-    setTotalScore(newTotalScore);
-    
-    
-  };
-  
-  useEffect(() => {
-    // Update the total score whenever the fields change
-    updateTotalScore();
-  }, [fields]);
-
-   
-
     const localStorageKey = `testPaperData_${tupcids}_${classcode}_${uid}`;
     const localStorageKey2 = `TData_${tupcids}_${classcode}_${uid}`;
     const localStorageKey3 = `QData_${tupcids}_${classcode}_${uid}`;
-    const localStorageKey4 = `sData_${tupcids}_${classcode}_${uid}`;
+    const localStorageKey4 = `SData_${tupcids}_${classcode}_${uid}`;
     
 
     useEffect(() => {
@@ -171,6 +159,46 @@ export default function TestPaper() {
       );
     }, [fieldTitleNumbers, fieldQuestionNumbers]);
 
+    const maxScoreFromLocalStorage = localStorage.getItem(localStorageKey4);
+
+    // Initialize `maxScore` with the value from local storage or the default value (10)
+    const [maxScore, setMaxScore] = useState(maxScoreFromLocalStorage ? parseInt(maxScoreFromLocalStorage) : 10);
+    
+    // Update the `maxScore` state and save it to local storage when it changes
+    const handleMaxScore = (event) => {
+      let value = event.target.value;
+      value = value.replace(/[^0-9]/g, "");
+      value = Math.min(Math.max(1, parseInt(value) || 1), 100);
+    
+      setMaxScore(value);
+    
+      // Save the updated `maxScore` to local storage
+      localStorage.setItem(localStorageKey4, value);
+    };
+    
+  const [totalScore, setTotalScore] = useState(0);
+  const [scoreDifference, setScoreDifference] = useState(0);
+
+  // Function to calculate and update the total score
+  const updateTotalScore = () => {
+    const newTotalScore = fields.reduce((acc, field) => {
+      const originalScore = parseInt(field.score) || 0;
+      const copiedScore = field.copiedFields.reduce((copiedAcc, copiedField) => {
+        return copiedAcc + (parseInt(copiedField.score) || 0);
+      }, 0);
+      return acc + originalScore + copiedScore;
+    }, 0);
+    
+    // Calculate the score difference and update the state
+    const newScoreDifference = maxScore - newTotalScore;
+    setScoreDifference(newScoreDifference);
+    setTotalScore(newTotalScore);
+  };
+  
+  useEffect(() => {
+    // Update the total score whenever the fields change
+    updateTotalScore();
+  }, [maxScore, fields]);
 
     const addNewField = () => {
       console.log("field eme...", fieldTitleNumbers.length);
@@ -1088,10 +1116,13 @@ export default function TestPaper() {
 
 
         </div>
+        <input type="checkbox" id="generateWord" /> Generate Word
+<input type="checkbox" id="generatePDF" /> Generate PDF
+
         <div className="d-flex gap-1 mt-1">
           <button
             className="border border-dark rounded py-1 px-3"
-            onClick={handleSaveToPDF}
+            onClick={handleSaveToDocsAndPDF}
           >
             Download File
           </button>

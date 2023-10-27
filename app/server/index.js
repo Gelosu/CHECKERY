@@ -2087,8 +2087,7 @@ app.get('/getquestionstypeandnumber/:tupcids/:uid', async (req, res) => {
   }
 });
     
-
-//for generating answersheet
+//generating answersheet
 app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
   try {
     const { uid, classcode } = req.params; // Extract parameters from the URL
@@ -2112,7 +2111,6 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
 
     // Execute the second query to fetch data from 'enrollments' and 'student_accounts'
     const [studentData] = await connection.query(query2, [classcode]);
- 
 
     const test_number = testData[0].test_number;
     const test_name = testData[0].test_name;
@@ -2121,129 +2119,161 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
     const doc = new PDFDocument({
       size: 'letter',
       margins: {
-        top: 30,    // Adjust top margin
-        bottom: 10, // Adjust bottom margin
-        left: 70,   // Adjust left margin
-        right: 20,  // Adjust right margin
+        top: 30,
+        bottom: 10,
+        left: 70,
+        right: 20,
       }
     });
     const filename = `${test_number} : ${test_name}.pdf`;
 
-
-    // Define the box size and spacing
-    const boxSize = 15;
-    const boxSpacing = 1;
-
-    // Define the number of boxes per question
-    const boxesPerQuestion = 15;
-
-    // Define the line weight for boxes
-    const boxLineWeight = 0.50;
     doc.fontSize(10);
-
-    
 
     // Iterate through studentData and add each student's information and answer sheet
     for (const student of studentData) {
       // Extract student information
       const { TUPCID, FIRSTNAME, MIDDLENAME, SURNAME } = student;
 
-      // Add student information to the PDF
-      doc.text(`${TUPCID}`, { bold: true });
-      doc.text(`${SURNAME}, ${FIRSTNAME}`, { bold: true });
-      doc.moveDown(); // Move to the next line
+      // Define column widths and spacing
+      const columnWidth = 200;
 
-      // Extract the questions, test_number, and test_name from the database response
-      const test_number = testData[0].test_number;
-      const test_name = testData[0].test_name;
+      // First rectangle information
+      doc.rect(70, 10, columnWidth + 299, 100).stroke();
+      doc.text(`${TUPCID}`, 90, 30, { width: columnWidth, align: 'left' });
+      doc.text(`${SURNAME}, ${FIRSTNAME}`, 90, 50, { width: columnWidth, align: 'left' });
+      doc.text(` ${test_number}:${test_name}  UID: ${uid}`, 190, 70, { width: columnWidth + 50, align: 'center' });
 
-      // Set the title based on TEST NUMBER and TEST NAME
-      const title = doc.text(`${test_number} : ${test_name} UID:${uid}`, {
-        bold: true,
-        fontSize: 24,
-        align: 'center',
-      });
-      doc.moveDown();
-
-      // Create an object to store questions grouped by questionType
+      
+      const questionsData = testData[0].questions;
       const groupedQuestions = {};
 
-      // Group questions by questionType
-      const questionsData = testData[0].questions;
       questionsData.forEach((item) => {
         const questionType = item.questionType;
+        const type = item.type;
 
-        // Check if questionType is defined and not empty
         if (questionType) {
           if (!groupedQuestions[questionType]) {
             groupedQuestions[questionType] = [];
           }
-          // Push question numbers only (you can customize this)
-          groupedQuestions[questionType].push({ questionNumber: item.questionNumber });
+          groupedQuestions[questionType].push({ questionNumber: item.questionNumber, type: item.type });
         }
       });
 
-      // Create a counter to track the number of unique question types
-      let testCounter = 1;
-      const boxStrokeColor = '#98bbf5';
-      
-      // Iterate through the grouped questions and add them to the PDF document
       for (const questionType in groupedQuestions) {
         const questionsOfType = groupedQuestions[questionType];
-        if (questionsOfType.length > 0) {
-          
 
+        if (questionsOfType.length > 0) {
           // Determine the display text based on question type
-          let displayText = '';
+          let displayText = ``;
+          let placeholder = '';
+
           if (questionType === 'MultipleChoice') {
             displayText = 'MULTIPLE CHOICE';
+            placeholder = '_____'
           } else if (questionType === 'TrueFalse') {
             displayText = 'TRUE OR FALSE';
+            placeholder = '_____'
           } else if (questionType === 'Identification') {
             displayText = 'IDENTIFICATION';
+            placeholder = '  _________________'
           }
 
-          doc.text(`TEST TYPE: ${displayText}`, {
-            bold: true,
-            fontSize: 16,
-          });
-
-          doc.moveDown();
-          doc.moveDown();
+          // Determine the alignment based on the 'type'
+          let alignment = 'left';
+          if (questionsOfType[0].type === 'TYPE 2') {
+            alignment = 'center';
+            
+          } else if (questionsOfType[0].type === 'TYPE 3') {
+            alignment = 'right';
+          }
           
+          if (questionsOfType[0].type === 'TYPE 1' && questionType === 'MultipleChoice') {
+            doc.rect(70, 140, columnWidth - 60, 600).stroke();
+          } else if (questionsOfType[0].type === 'TYPE 1' && questionType === 'TrueFalse') {
+            doc.rect(70 , 140, columnWidth - 60, 600).stroke();
+          } else if (questionsOfType[0].type === 'TYPE 1' && questionType === 'Identification') {
+            doc.rect(70 , 140, columnWidth - 40, 600).stroke();}
+          
+            if (questionsOfType[0].type === 'TYPE 2' && questionType === 'MultipleChoice') {
+              doc.rect(70 + 172, 140, columnWidth - 60, 600).stroke();
+            } else if (questionsOfType[0].type === 'TYPE 2' && questionType === 'TrueFalse') {
+              doc.rect(70 + 172, 140, columnWidth - 60, 600).stroke();
+            } else if (questionsOfType[0].type === 'TYPE 2' && questionType === 'Identification') {
+              doc.rect(70 + 172 , 140, columnWidth - 40, 600).stroke();}
+
+              if (questionsOfType[0].type === 'TYPE 3' && questionType === 'MultipleChoice') {
+                doc.rect(70 + 340, 140, columnWidth - 60, 600).stroke();
+              } else if (questionsOfType[0].type === 'TYPE 3' && questionType === 'TrueFalse') {
+                doc.rect(70 + 340 , 140, columnWidth - 60, 600).stroke();
+              } else if (questionsOfType[0].type === 'TYPE 3' && questionType === 'Identification') {
+                doc.rect(70 + 340 , 140, columnWidth - 40, 600).stroke();}
+          
+         
+          doc.text(`${displayText}`, 90,170, { width: columnWidth + 220, align: alignment });
+
+          doc.moveDown(2);
 
           let questionNumber = 1; // Initialize question number
-
           questionsOfType.forEach(() => {
-            // Add question number
-            doc.text(`${questionNumber}.`, {
-              bold: true,
-              align: 'left',
-              
-            });
-
-            // Set the border color for the boxes
-            doc.strokeColor(boxStrokeColor); // Change the border color here
-
-            // Draw boxes with the specified border color and decreased line weight
-            if (questionType === 'MultipleChoice' || questionType === 'TrueFalse') {
-              // For Multiple Choice and True/False, generate one box
-              doc.rect(doc.x + 15 + boxSpacing, doc.y - 18, boxSize, boxSize).lineWidth(boxLineWeight).stroke();
-            } else if (questionType === 'Identification') {
-              // For Identification, generate 10 boxes
-              for (let i = 1; i <= boxesPerQuestion; i++) {
-                doc.rect(doc.x + i * (boxSize + boxSpacing), doc.y - 18, boxSize, boxSize).lineWidth(boxLineWeight).stroke();
+            if(questionNumber<= 9){
+              if (questionType === 'Identification') {
+                doc.text(`${questionNumber}.    ${placeholder}`, {
+                  bold: true,
+                  fontSize: 12,
+                  width: columnWidth + 260, // Customize the width
+                  align: alignment, // Set alignment based on the 'type'
+                });
+              } else if (questionType === 'TrueFalse') {
+                doc.text(`${questionNumber}.        ${placeholder}`, {
+                  bold: true,
+                  fontSize: 12,
+                  width: columnWidth + 200, // Customize the width
+                  align: alignment, // Set alignment based on the 'type'
+                });
+              }else {
+                doc.text(`${questionNumber}.        ${placeholder}`, {
+                  bold: true,
+                  fontSize: 12,
+                  width: columnWidth + 220, // Customize the width
+                  align: alignment, // Set alignment based on the 'type'
+                });
               }
             }
-
-            doc.moveDown(1); // Move to the next line
+            
+            if (questionNumber >= 10) {
+              
+            if (questionType === 'Identification') {
+              doc.text(`${questionNumber}.  ${placeholder}`, {
+                bold: true,
+                fontSize: 12,
+                width: columnWidth + 260, // Customize the width
+                align: alignment, // Set alignment based on the 'type'
+              });
+            } else if (questionType === 'TrueFalse') {
+              doc.text(`${questionNumber}.      ${placeholder}`, {
+                bold: true,
+                fontSize: 12,
+                width: columnWidth + 200, // Customize the width
+                align: alignment, // Set alignment based on the 'type'
+              });
+            }else {
+              doc.text(`${questionNumber}.      ${placeholder}`, {
+                bold: true,
+                fontSize: 12,
+                width: columnWidth + 220, // Customize the width
+                align: alignment, // Set alignment based on the 'type'
+              });
+            }
+          }
+            doc.moveDown(1.30);
             questionNumber++;
           });
-
-          testCounter++;
-          doc.moveDown(); // Increment test counter for the next type
+          
         }
       }
+
+      // Move to the next student's position
+      doc.moveDown(4);
 
       // Add a page break for the next student (except for the last one)
       if (student !== studentData[studentData.length - 1]) {
@@ -2251,20 +2281,20 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
       }
     }
 
-   // Pipe the PDF to the response stream
-   res.setHeader('Content-Type', 'application/pdf');
-   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-   doc.pipe(res);
+    // Pipe the PDF to the response stream
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    doc.pipe(res);
 
-   // Finalize the PDF and end the response stream
-   doc.end();
- } catch (error) {
-   console.error('Error generating PDF:', error);
-   res.status(500).send('Error generating PDF');
- }
+    // Finalize the PDF and end the response stream
+    doc.end();
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).send('Error generating PDF');
+  }
 });
 
-
+  
 
 
 

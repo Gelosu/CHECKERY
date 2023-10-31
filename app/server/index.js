@@ -30,7 +30,7 @@ app.use(
 app.use(
   cors({
     origin: "checkery-65xnq5lg1-gelosu.vercel.app",
-    credentials: true,
+    credentials: false,
   })
 );
 app.use(cookieParser("mySecretKey"));

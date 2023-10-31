@@ -30,19 +30,6 @@ export default function Login() {
     formState: { errors },
   } = useForm({ resolver: yupResolver(schema) });
 
-const checkDatabaseConnection = async () => {
-    try {
-      const response = await axios.get('https://checkery-o3d5cpy98-gelosu.vercel.app/checkDatabaseConnection'); // Adjust the endpoint to match your server route.
-      if (response.data.connected) {
-        window.alert('Connected to the database');
-      } else {
-        window.alert('Not connected to the database');
-      }
-    } catch (error) {
-      window.alert('Error checking database connection');
-      console.error('Error checking database connection:', error);
-    }
-  };
 
 
   
@@ -139,7 +126,6 @@ const checkDatabaseConnection = async () => {
             Register Now
           </a>
         </p>
-        <button onClick={checkDatabaseConnection}>Check Connection</button>
       </section>
     </main>
   );

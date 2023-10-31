@@ -223,7 +223,7 @@ export default function AdminPage() {
     switch (selectedOption) {
       case "student":
         axios
-          .get("/students")
+          .get("https://checkery.vercel.app/students")
           .then((response) => {
             setStudentData(response.data);
           })
@@ -233,7 +233,7 @@ export default function AdminPage() {
         break;
       case "faculty":
         axios
-          .get("/faculty")
+          .get("https://checkery.vercel.app/faculty")
           .then((response) => {
             setFacultyData(response.data);
           })
@@ -243,7 +243,7 @@ export default function AdminPage() {
         break;
       case "admin":
         axios
-          .get("/admin")
+          .get("https://checkery.vercel.app/admin")
           .then((response) => {
             setAdminData(response.data);
           })

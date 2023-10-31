@@ -63,7 +63,7 @@ export default function AdminPage() {
   // Function to update student data on the server
   const updateStudentDataOnServer = (TUPCID, updatedData) => {
     axios
-      .put(`http://localhost:3001/student/${TUPCID}`, updatedData)
+      .put(`/student/${TUPCID}`, updatedData)
       .then((response) => {
         console.log(response.data);
         setIsEditing(false);
@@ -80,7 +80,7 @@ export default function AdminPage() {
 
   const updateFacultyDataOnServer = (TUPCID, updatedData) => {
     axios
-      .put(`http://localhost:3001/faculty/${TUPCID}`, updatedData)
+      .put(`/faculty/${TUPCID}`, updatedData)
       .then((response) => {
         console.log(response.data);
         setIsEditing(false);
@@ -98,7 +98,7 @@ export default function AdminPage() {
   // Function to update admin data on the server
   const updateAdminDataOnServer = (TUPCID, updatedData) => {
     axios
-      .put(`http://localhost:3001/admin/${TUPCID}`, updatedData)
+      .put(`/admin/${TUPCID}`, updatedData)
       .then((response) => {
         console.log(response.data);
         setIsEditing(false);
@@ -208,7 +208,7 @@ export default function AdminPage() {
     }
 
     axios
-      .delete(`http://localhost:3001/${endpoint}/${TUPCID}`)
+      .delete(`/${endpoint}/${TUPCID}`)
       .then((response) => {
         console.log(response.data);
         // Fetch data again after deletion
@@ -223,7 +223,7 @@ export default function AdminPage() {
     switch (selectedOption) {
       case "student":
         axios
-          .get("http://localhost:3001/students")
+          .get("/students")
           .then((response) => {
             setStudentData(response.data);
           })
@@ -233,7 +233,7 @@ export default function AdminPage() {
         break;
       case "faculty":
         axios
-          .get("http://localhost:3001/faculty")
+          .get("/faculty")
           .then((response) => {
             setFacultyData(response.data);
           })
@@ -243,7 +243,7 @@ export default function AdminPage() {
         break;
       case "admin":
         axios
-          .get("http://localhost:3001/admin")
+          .get("/admin")
           .then((response) => {
             setAdminData(response.data);
           })

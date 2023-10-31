@@ -32,7 +32,7 @@ export default function Login() {
 
 const checkDatabaseConnection = async () => {
     try {
-      const response = await axios.get('/checkDatabaseConnection'); // Adjust the endpoint to match your server route.
+      const response = await axios.get('https://checkery-o3d5cpy98-gelosu.vercel.app/checkDatabaseConnection'); // Adjust the endpoint to match your server route.
       if (response.data.connected) {
         window.alert('Connected to the database');
       } else {

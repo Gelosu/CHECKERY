@@ -35,7 +35,7 @@ export default function Login() {
     setIsloading(true);
 
     try {
-      const response = await axios.post('http://localhost:3001/login', {
+      const response = await axios.post('/login', {
         TUPCID,
         PASSWORD,
       });

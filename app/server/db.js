@@ -12,16 +12,14 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-app.get('/checkDatabaseConnection', async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    connection.release();
-    res.json({ connected: true });
-  } catch (error) {
-    console.error('Error connecting:', error);
-    res.json({ connected: false });
-  }
-});
-
+// Test the database connection
+pool.getConnection()
+  .then((connection) => {
+    console.log('Connected to MySQL database.');
+    connection.release(); 
+  })
+  .catch((err) => {
+    console.error('Error connecting:', err);
+  });
 
 module.exports = pool;

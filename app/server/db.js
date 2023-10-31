@@ -22,4 +22,16 @@ pool.getConnection()
     console.error('Error connecting:', err);
   });
 
+app.get('/checkDatabaseConnection', (req, res) => {
+  pool.getConnection()
+    .then((connection) => {
+      connection.release();
+      res.json({ connected: true });
+    })
+    .catch((err) => {
+      console.error('Error checking the database connection:', err);
+      res.json({ connected: false });
+    });
+});
+
 module.exports = pool;

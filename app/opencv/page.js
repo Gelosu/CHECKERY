@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect } from 'react';
 import Webcam from 'react-webcam'; // Import the Webcam component
 import axios from 'axios';

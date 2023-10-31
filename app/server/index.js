@@ -29,7 +29,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "checkery-65xnq5lg1-gelosu.vercel.app",
     credentials: true,
   })
 );

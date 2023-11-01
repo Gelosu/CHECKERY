@@ -29,7 +29,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: "https://checkery-65xnq5lg1-gelosu.vercel.app",
+    origin: "https://checkery-76jkk7lvb-gelosu.vercel.app",
     credentials: false,
   })
 );

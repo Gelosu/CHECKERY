@@ -228,14 +228,16 @@ export default function StudentRegister() {
               SUBMIT
             </button>
           </div>
-        </form>
 
-        {apiResponse && (
+          {apiResponse && (
         <div>
           <h3>API Response:</h3>
           <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
         </div>
       )}
+        </form>
+
+        
     
       </section>
     </main>

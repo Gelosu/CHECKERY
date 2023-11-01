@@ -32,7 +32,7 @@ export default function StudentRegister() {
   const onSubmit = async (data) => {
     try {
       setErrorMessage("");
-      const response = await axios.post("https://checkery.vercel.app/studreg", data);
+      const response = await axios.post("http://localhost:3001/studreg", data);
       console.log(response.status)
       console.log(response.data);
       if (response.status === 200) {

@@ -1,9 +1,6 @@
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
   swcMinify: true,
-  experimental: {
-    appDir: true,
-  },
   webpack: (config) => {
     // Ignore the @mapbox/node-pre-gyp HTML file
     config.module.rules.push({
@@ -14,5 +11,3 @@ const nextConfig = {
     return config;
   },
 };
-
-module.exports = nextConfig;

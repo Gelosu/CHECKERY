@@ -1,4 +1,4 @@
-const express = require("express");
+Iconst express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const passport = require("passport");
@@ -2374,6 +2374,6 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
 
 
 //for server
-app.listen(3306, () => {
-  console.log("Server started on port");
+app.listen(process.env.PORT || 80, () => {
+  console.log("Server started on port " + (process.env.PORT || 80));
 });

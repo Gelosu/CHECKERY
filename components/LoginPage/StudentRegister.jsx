@@ -32,7 +32,8 @@ export default function StudentRegister() {
   const onSubmit = async (data) => {
     try {
       setErrorMessage("");
-      const response = await axios.post("/studreg", data);
+      const response = await axios.post("https://checkery-1tlvg9qa1-gelosu.vercel.app
+/studreg", data);
       console.log(response.status)
       console.log(response.data);
    

@@ -2374,6 +2374,6 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
 
 
 //for server
-app.listen(3001, () => {
+app.listen(3306, () => {
   console.log("Server started on port");
 });

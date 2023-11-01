@@ -33,7 +33,6 @@ app.use(
     credentials: true,
   })
 );
-
 app.use(cookieParser("mySecretKey"));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -2370,6 +2369,8 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+
 
 //for server
 app.listen(3001, () => {

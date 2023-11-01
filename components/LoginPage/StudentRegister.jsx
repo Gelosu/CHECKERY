@@ -8,7 +8,6 @@ import { useRouter } from "next/navigation";
 export default function StudentRegister() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
-  const [apiResponse, setApiResponse] = useState(null); // State to store API response
   const gsfeRegExp = /@gsfe.tupcavite.edu.ph/;
   const tupcRegExp = /TUPC-\d{2}-\d{4}$/;
   const schema = yup.object().shape({
@@ -36,7 +35,7 @@ export default function StudentRegister() {
       const response = await axios.post("/studreg", data);
       console.log(response.status)
       console.log(response.data);
-      setApiResponse(response.data);
+   
       if (response.status === 200) {
         // Student registration successful, redirect or show success message
         console.log("Student registered successfully!");
@@ -229,12 +228,7 @@ export default function StudentRegister() {
             </button>
           </div>
 
-          {apiResponse && (
-        <div>
-          <h3>API Response:</h3>
-          <pre>{JSON.stringify(apiResponse, null, 2)}</pre>
-        </div>
-      )}
+        
         </form>
 
         

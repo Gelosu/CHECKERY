@@ -30,7 +30,7 @@ app.use(
 app.use(
   cors({
     origin: "https://checkery.vercel.app",
-    credentials: false,
+    credentials: true,
   })
 );
 

@@ -32,8 +32,7 @@ export default function StudentRegister() {
   const onSubmit = async (data) => {
     try {
       setErrorMessage("");
-      const response = await axios.post("
-/studreg", data);
+      const response = await axios.post("/studreg", data);
       console.log(response.status)
       console.log(response.data);
    

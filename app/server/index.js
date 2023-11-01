@@ -29,10 +29,11 @@ app.use(
 );
 app.use(
   cors({
-    origin: "checkery-65xnq5lg1-gelosu.vercel.app",
+    origin: "https://checkery-65xnq5lg1-gelosu.vercel.app",
     credentials: false,
   })
 );
+
 app.use(cookieParser("mySecretKey"));
 app.use(passport.initialize());
 app.use(passport.session());

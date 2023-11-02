@@ -38,7 +38,7 @@ export default function Login() {
     setIsloading(true);
 
     try {
-      const response = await axios.post('/login', {
+      const response = await axios.post('https://autochecker1.vercel.app/login', {
         TUPCID,
         PASSWORD,
       });

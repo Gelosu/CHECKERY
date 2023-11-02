@@ -180,8 +180,7 @@ export default function AnswerKey() {
                     {testSection.questions.map((question, qIndex) => (
                       <li key={qIndex}>
                         {`${question.questionNumber}. `}
-                        {/* Display a placeholder for the answer (e.g., "blank") */}
-                        {'student answer'}
+                        
                       </li>
                     ))}
                   </ul>

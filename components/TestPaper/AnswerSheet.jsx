@@ -35,7 +35,7 @@ export default function AnswerSheet() {
         a.href = url;
         a.download = `${testname}_answersheet.pdf`;
         a.click();
-      } else {
+      } else { 
         console.error("Failed to generate PDF.");
       }
     } catch (error) {
@@ -83,7 +83,7 @@ export default function AnswerSheet() {
         const filteredTestData = organizedTestData.filter(
           (item) => item.type && item.highestNumber
         );
-
+          
         // Set the state variable
         setTestData(filteredTestData);
       } else {
@@ -94,7 +94,20 @@ export default function AnswerSheet() {
     }
   };
 
-  // Call the fetchQtypeandQn function when the component mounts
+  const mapTestType = (type) => {
+    switch (type) {
+      case 'MultipleChoice':
+        return 'MULTIPLE CHOICE:  ';
+      case 'TrueFalse':
+        return 'TRUE OR FALSE:  ';
+      case 'Identification':
+        return 'IDENTIFICATION:  ';
+      default:
+        return type; 
+    }
+  };
+
+
   useEffect(() => {
     fetchQtypeandQn();
   }, []);
@@ -158,16 +171,16 @@ export default function AnswerSheet() {
         </ul>
         {/* CONTENT */}
         <section className="container-sm mt-5 col-xl-6 py-3 px-4 border border-dark rounded">
-          {testData.length > 0 ? (
-            testData.map((item, index) => (
-              <div key={index} className="row p-sm-2 px-3">
-                <p className="col-sm-12 my-1 text-center">
-                   TYPE OF TEST: {item.type} NUMBER OF QUESTIONS: {item.highestNumber}
-                </p>
-              </div>
-            ))
-          ) : (
-            <p>No data available</p>
+        {testData.length > 0 ? (
+      testData.map((item, index) => (
+        <div key={index} className="row p-sm-2 px-3">
+          <p className="col-sm-12 my-1 text-center">
+            {mapTestType(item.type)} NUMBER OF QUESTIONS: {item.highestNumber}
+          </p>
+        </div>
+      ))
+    ) : (
+      <p>No data available</p>
           )}
           <div className="text-center">
             {testData.length > 0 && (
@@ -180,7 +193,6 @@ export default function AnswerSheet() {
             )}
           </div>
         </section>
-        {/* END CONTENT */}
       </section>
     </main>
   );

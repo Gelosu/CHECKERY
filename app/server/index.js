@@ -29,7 +29,7 @@ app.use(
 );
 app.use(
   cors({
-    origin: "https://checkery.vercel.app",
+    origin: "https://autochecker1.vercel.app",
     credentials: false,
   })
 );

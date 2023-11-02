@@ -14,8 +14,6 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 
 
-
-
 const app = express();
 
 app.use(bodyParser.json());
@@ -29,8 +27,8 @@ app.use(
 );
 app.use(
   cors({
-    origin: "https://autochecker1.vercel.app",
-    credentials: false,
+    origin: "http://localhost:3000",
+    credentials: true,
   })
 );
 app.use(cookieParser("mySecretKey"));
@@ -2114,6 +2112,7 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
 
     const test_number = testData[0].test_number;
     const test_name = testData[0].test_name;
+  
 
     // Create a new PDF document
     const doc = new PDFDocument({
@@ -2147,10 +2146,10 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
       doc.lineWidth(5);
 
       // First rectangle information
-      doc.rect(70, 10, columnWidth + 299, 100).stroke();
+      doc.rect(70, 10, columnWidth + 299, 110).stroke();
       doc.text(`${TUPCID}`, 90, 30, { width: columnWidth, align: 'left', bold: true });
-      doc.text(`${SURNAME}, ${FIRSTNAME}`, 90, 50, { width: columnWidth, align: 'left', bold: true });
-      doc.text(` ${test_number}:${test_name}  UID: ${uid}`, 190, 70, { width: columnWidth + 50, align: 'center', bold: true });
+      doc.text(`NAME: ${SURNAME}, ${FIRSTNAME}`, 90, 50, { width: columnWidth, align: 'left', bold: true });
+      doc.text(`TESTNAME: ${test_name}  UID: ${uid}`, 150, 70, { width: columnWidth + 100, align: 'center', bold: true });
 
       const questionsData = testData[0].questions;
       const groupedQuestions = {};
@@ -2173,6 +2172,7 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
         if (questionsOfType.length > 0) {
           // Determine the display text based on question type
           let displayText = ``;
+          let typeoftest = `TYPE 1`;
 
           if (questionType === 'MultipleChoice') {
             displayText = 'MULTIPLE CHOICE';
@@ -2185,8 +2185,10 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
           // Determine the alignment based on the 'type'
           let alignment = 'left';
           if (questionsOfType[0].type === 'TYPE 2') {
+            typeoftest = 'TYPE 2';
             alignment = 'center';
           } else if (questionsOfType[0].type === 'TYPE 3') {
+            typeoftest = 'TYPE 3';
             alignment = 'right';
           }
          
@@ -2217,9 +2219,9 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
 
           doc.lineWidth(5); // Set the line thickness back to the default value (adjust as needed)
 
-          doc.text(`${displayText}`, 90, 170, { width: columnWidth + 220, align: alignment });
+          doc.text(`${typeoftest}: ${displayText}`, 90, 100, { width: columnWidth + 220, align: alignment });
 
-          doc.moveDown(2);
+          doc.moveDown(6);
 
           let questionNumber = 1; 
           questionsOfType.forEach(() => {
@@ -2253,44 +2255,77 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
                 doc.text(`${questionNumber}.  `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 260,
-                  align: alignment, 
+                  width: columnWidth + 150,
+                  align: alignment,
                 });
               } else if (questionType === 'TrueFalse') {
                 doc.text(`${questionNumber}.   `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 200, // Customize the width
-                  align: alignment, // Set alignment based on the 'type'
+                  width: columnWidth + 155,
+                  align: alignment,
                 });
               } else {
-                doc.text(`${questionNumber}.   `, {
+                doc.text(`${questionNumber}.    `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 220, // Customize the width
-                  align: alignment, // Set alignment based on the 'type'
+                  width: columnWidth + 220,
+                  align: alignment,
                 });
               }
             }
            
 
             // BOXES
-            if (questionType === 'MultipleChoice') {
+            if (questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 1') {
               doc.rect(doc.x + 30 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
-            } else if (questionType === 'Identification') {
-              doc.rect(doc.x + 375, doc.y - 19.5, 90, boxSize)
+            } else if (questionType === 'Identification' && questionsOfType[0].type === 'TYPE 1') {
+              doc.rect(doc.x + 30 , doc.y - 19.5, 90, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
-            } else if (questionType === 'TrueFalse') {
-              doc.rect(doc.x + 200 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
+            } else if (questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 1') {
+              doc.rect(doc.x + 30 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            } else if(questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 2'){
+              doc.rect(doc.x + 200, doc.y - 19.5, boxSize, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            } else if(questionType === 'Identification' && questionsOfType[0].type === 'TYPE 2'){
+              doc.rect(doc.x + 200, doc.y - 19.5, 90, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            } else if(questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 2'){
+              doc.rect(doc.x + 200, doc.y - 19.5, boxSize, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            } else if(questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 3'){
+              doc.rect(doc.x + 365, doc.y - 19.5, boxSize, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            } else if(questionType === 'Identification' && questionsOfType[0].type === 'TYPE 3'){
+              doc.rect(doc.x + 365, doc.y - 19.5, 90, boxSize)
+                .lineWidth(boxLineWeight)
+                .stroke('#adb8af')
+                .strokeColor('black');
+            }else if(questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 3'){
+              doc.rect(doc.x + 365, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             }
+
+
+            
             doc.fill('black')
             doc.strokeColor('black');
             doc.moveDown(1.30);
@@ -2372,7 +2407,35 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
 
 
 
+app.post('/results', async (req, res) => {
+  try {
+    const { TUPCID, UID, questionType, RESULTS } = req.body;
+
+    // Insert data into the database
+    const query = `
+      INSERT INTO results
+      (TUPCID, UID, questionType,RESULTS, results_takendate) 
+      VALUES (?, ?, ?,?, NOW())
+    `;
+
+    const values = [
+      TUPCID || null,
+      UID || null,
+      JSON.stringify( questionType),
+      JSON.stringify(RESULTS), // Store RESULTS as JSON
+    ];
+
+    await connection.query(query, values);
+
+    // Respond with a success message
+    res.status(200).json({ message: 'Data added to the database successfully' });
+  } catch (error) {
+    console.error('Error adding data to the database:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
 //for server
-app.listen(8080, () => {
+app.listen(3001, () => {
   console.log("Server started on port 3001");
 });

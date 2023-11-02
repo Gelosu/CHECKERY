@@ -2,8 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { createWorker } from 'tesseract.js';
 import axios from 'axios';
 
-function TesseractOCR({ Image }) {
+function TesseractOCR({ Image, setLoading, setProgress }) {
   const [recognizedText, setRecognizedText] = useState('');
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isPopUpVisible, setIsPopUpVisible] = useState(false);
+  const [isSendingData, setIsSendingData] = useState(false);
+  const [textArray, setTextArray] = useState([]);
+  const [questionType, setQuestionType] = useState([]);
+  const [TUPCID, setTUPCID] = useState(null);
+  const [UID, setUID] = useState(null);
+  const [loadingText, setLoadingText] = useState('');
 
   const recognizeText = async () => {
     if (Image) {
@@ -12,14 +20,25 @@ function TesseractOCR({ Image }) {
         await worker.setParameters({
           tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ) ',
         });
+  
+        for (let i = 0; i < 100; i++) {
+          setLoadingProgress(i);
+          if (i === 1) setLoadingText('STARTING');
+          if (i === 20) setLoadingText('PREPROCESSING'); 
+          if (i === 90) setLoadingText('FINALIZING'); 
+          if (i === 100) setLoadingText('RESULT READY!'); 
+          await new Promise(resolve => setTimeout(resolve, 150));
+        }
+  
+        setProgress(100);
+  
         const { data: { text } } = await worker.recognize(Image);
-        setRecognizedText(text); // Store recognized text in state
   
         let array = text.split('\n');
         array = array.filter(line => line.trim() !== '');
   
         let questionTypes = [];
-  
+
         for (const line of array) {
           if (line.includes('MULTIPLE CHOICE')) {
             questionTypes.push('MultipleChoice');
@@ -31,11 +50,11 @@ function TesseractOCR({ Image }) {
             questionTypes.push('Identification');
           }
         }
-  
+        
         if (array.length >= 2 && array[1].includes('NAME')) {
           array.splice(1, 1);
         }
-  
+        
         const resultsArray = array.filter((line) => {
           return (
             !questionTypes.some(type => line.includes(type)) &&
@@ -44,77 +63,94 @@ function TesseractOCR({ Image }) {
             !line.includes('IDENTIFICATION')
           );
         });
+        
+      
+        
+        for (const line of resultsArray) {
+          if (line.includes('TUPC')) {
+            const match = line.match(/TUPC(\d{2})(\d{4})/);
+            if (match) {
+              setTUPCID(`TUPC-${match[1]}-${match[2]}`);
+            }
+          } else if (line.includes('UID')) {
+            const uidMatch = line.match(/UID (\d+)/);
+            if (uidMatch) {
+              setUID(uidMatch[1]);
+            }
+          }
+        }
+
+        const filteredResultsArray = resultsArray.filter((line) => {
+          return !line.includes('TUPC') && !line.includes('UID');
+        });
+        
+
+        
+        
+        setTextArray(filteredResultsArray);
+        setQuestionType(questionTypes);
+        setRecognizedText(text);
+        setIsPopUpVisible(true);
   
         await worker.terminate();
-  
-        // Send the parsed text data to the server
-        sendTextToServer(resultsArray, questionTypes);
       } catch (error) {
         console.error(error);
       }
     }
-  };
-  
-  
+  }
 
-  useEffect(() => {
-    recognizeText();
-  }, [Image]);
+  const sendTextToServer = async () => {
+    setIsSendingData(true);
 
-  const sendTextToServer = async (textArray, questionType) => {
-    let TUPCID = null;
-    let UID = null; // Use let instead of const
-    const RESULTS = [];
-  
-    for (const line of textArray) {
-      if (line.includes('TUPC')) {
-        const match = line.match(/TUPC(\d{2})(\d{4})/);
-        if (match) {
-          TUPCID = `TUPC-${match[1]}-${match[2]}`;
-        }
-      } else if (line.includes('UID')) {
-        const uidMatch = line.match(/UID (\d+)/);
-        if (uidMatch) {
-          UID = uidMatch[1];
-        }
-      } else {
-        if (!line.includes('TUPCID') && !line.includes('UID')) {
-          RESULTS.push(line);
-        }
-      }
-    }
-  
-    // Debugging information
-    console.log('TUPCID:', TUPCID);
-    console.log('UID:', UID);
-    console.log('RESULTS:', RESULTS);
-    console.log('questionType:', questionType);
-  
-    if (!TUPCID) {
-      console.error('TUPCID is null; data not sent to the server');
-      return;
-    }
-  
+   
     try {
       const response = await axios.post('http://localhost:3001/results', {
         TUPCID,
         UID,
         questionType,
-        RESULTS,
+        RESULTS: textArray,
       });
+      console.log("send data:  ", textArray)
       console.log('Data sent to the server:', response.data);
+      setLoadingProgress(100);
+      setLoadingText("COMPLETE")
+      setTimeout(() => {
+        setLoadingText(''); // Clear the loading text after 5 seconds
+      }, 5000);
+
     } catch (error) {
       console.error('Error sending data to the server:', error);
+    } finally {
+      setIsSendingData(false);
+      setIsPopUpVisible(false);
+      setLoading(false);
     }
-  };
-  
+  }
+
+  const cancelAction = () => {
+    setIsPopUpVisible(false);
+  }
+
+  useEffect(() => {
+    recognizeText();
+  }, [Image]);
 
   return (
     <div>
-      {recognizedText && (
-        <div>
-          <h2>Recognized Text:</h2>
+      {isPopUpVisible && (
+        <div className="popup">
+          <h2>Confirm Action</h2>
+          <p>Do you want to send the data to the database?</p>
+          <button onClick={sendTextToServer}>Send</button>
+          <button onClick={cancelAction}>Cancel</button>
+          <p>Recognized Text:</p>
           <p>{recognizedText}</p>
+        </div>
+      )}
+
+{setLoading && (
+        <div>
+          {isSendingData ? 'Sending data to the server...' : loadingText}
         </div>
       )}
     </div>

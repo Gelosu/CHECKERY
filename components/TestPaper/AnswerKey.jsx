@@ -27,6 +27,10 @@ export default function AnswerKey() {
   const [testType, setTestType] = useState('No Test Paper Yet');
   const [ImageData, setImageData] = useState(null);
   const [processedImageData, setProcessedImageData] = useState(null);
+  const [loading, setLoading] = useState(true);
+const [progress, setProgress] = useState(0);
+
+
   
   const handleImageSelected = (retrievedImage) => {
     setImageData(retrievedImage);
@@ -197,9 +201,10 @@ export default function AnswerKey() {
             </div>
           )}
   
-          <TextLocalization imageData={processedImageData} /> 
+        <TextLocalization imageData={processedImageData} /> 
         <TextLocalization2 imageData={processedImageData} /> 
-        <TesseractOCR Image={processedImageData} />
+        <TesseractOCR Image={processedImageData} setLoading={setLoading} setProgress={setProgress} />
+
         </section>
         {/* END CONTENT */}
       </section>

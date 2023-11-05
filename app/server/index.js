@@ -2129,6 +2129,7 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
     // Define the box size and spacing
     const boxSize = 15;
     const boxSpacing = 1;
+    const boxesPerQuestion = 10;
     
     // Define the line weight for boxes
     const boxLineWeight = 0.50;
@@ -2172,7 +2173,7 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
         if (questionsOfType.length > 0) {
           // Determine the display text based on question type
           let displayText = ``;
-          let typeoftest = `TYPE 1`;
+          
 
           if (questionType === 'MultipleChoice') {
             displayText = 'MULTIPLE CHOICE';
@@ -2182,7 +2183,7 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
             displayText = 'IDENTIFICATION';
           }
 
-          // Determine the alignment based on the 'type'
+          
           let alignment = 'left';
           if (questionsOfType[0].type === 'TYPE 2') {
             typeoftest = 'TYPE 2';
@@ -2194,32 +2195,32 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
          
 
           if (questionsOfType[0].type === 'TYPE 1' && questionType === 'MultipleChoice') {
-            doc.rect(70, 140, columnWidth - 60, 600).stroke().strokeColor('black');
+            doc.rect(70, 140, columnWidth - 100, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 1' && questionType === 'TrueFalse') {
             doc.rect(70, 140, columnWidth - 60, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 1' && questionType === 'Identification') {
-            doc.rect(70, 140, columnWidth - 40, 600).stroke().strokeColor('black');
+            doc.rect(70, 140, columnWidth + 35, 600).stroke().strokeColor('black');
           }
 
           if (questionsOfType[0].type === 'TYPE 2' && questionType === 'MultipleChoice') {
-            doc.rect(70 + 172, 140, columnWidth - 60, 600).stroke().strokeColor('black');
+            doc.rect(70 + 165, 140, columnWidth - 60, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 2' && questionType === 'TrueFalse') {
-            doc.rect(70 + 172, 140, columnWidth - 60, 600).stroke().strokeColor('black');
+            doc.rect(70 + 130, 140, columnWidth - 100, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 2' && questionType === 'Identification') {
-            doc.rect(70 + 172, 140, columnWidth - 40, 600).stroke().strokeColor('black');
+            doc.rect(70 + 130, 140, columnWidth + 35, 600).stroke().strokeColor('black');
           }
 
           if (questionsOfType[0].type === 'TYPE 3' && questionType === 'MultipleChoice') {
-            doc.rect(70 + 340, 140, columnWidth - 60, 600).stroke().strokeColor('black');
+            doc.rect(70 + 330, 140, columnWidth - 60, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 3' && questionType === 'TrueFalse') {
-            doc.rect(70 + 340, 140, columnWidth - 60, 600).stroke().strokeColor('black');
+            doc.rect(70 + 330, 140, columnWidth - 60, 600).stroke().strokeColor('black');
           } else if (questionsOfType[0].type === 'TYPE 3' && questionType === 'Identification') {
-            doc.rect(70 + 340, 140, columnWidth - 40, 600).stroke().strokeColor('black');
+            doc.rect(70 + 265, 140, columnWidth + 35, 600).stroke().strokeColor('black');
           }
 
           doc.lineWidth(5); // Set the line thickness back to the default value (adjust as needed)
 
-          doc.text(`${typeoftest}: ${displayText}`, 90, 100, { width: columnWidth + 220, align: alignment });
+          doc.text(`${displayText}`, 90, 100, { width: columnWidth + 220, align: alignment });
 
           doc.moveDown(6);
 
@@ -2230,14 +2231,14 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
                 doc.text(`${questionNumber}.  `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 150,
+                  width: columnWidth + 80,
                   align: alignment,
                 });
               } else if (questionType === 'TrueFalse') {
                 doc.text(`${questionNumber}.   `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 155,
+                  width: columnWidth + 80,
                   align: alignment,
                 });
               } else {
@@ -2255,14 +2256,14 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
                 doc.text(`${questionNumber}.  `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 150,
+                  width: columnWidth + 80,
                   align: alignment,
                 });
               } else if (questionType === 'TrueFalse') {
                 doc.text(`${questionNumber}.   `, {
                   bold: true,
                   fontSize: 12,
-                  width: columnWidth + 155,
+                  width: columnWidth + 80,
                   align: alignment,
                 });
               } else {
@@ -2278,52 +2279,51 @@ app.get('/generateAnswerSheet/:uid/:classcode', async (req, res) => {
 
             // BOXES
             if (questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 1') {
-              doc.rect(doc.x + 30 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 45 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if (questionType === 'Identification' && questionsOfType[0].type === 'TYPE 1') {
-              doc.rect(doc.x + 30 , doc.y - 19.5, 90, boxSize)
+              doc.rect(doc.x + 45 , doc.y - 19.5, 140, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if (questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 1') {
-              doc.rect(doc.x + 30 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 45 + boxSpacing, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if(questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 2'){
-              doc.rect(doc.x + 200, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 175, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if(questionType === 'Identification' && questionsOfType[0].type === 'TYPE 2'){
-              doc.rect(doc.x + 200, doc.y - 19.5, 90, boxSize)
+              doc.rect(doc.x + 175, doc.y - 19.5, 140, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if(questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 2'){
-              doc.rect(doc.x + 200, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 175, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if(questionType === 'MultipleChoice' && questionsOfType[0].type === 'TYPE 3'){
-              doc.rect(doc.x + 365, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 320, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             } else if(questionType === 'Identification' && questionsOfType[0].type === 'TYPE 3'){
-              doc.rect(doc.x + 365, doc.y - 19.5, 90, boxSize)
+              doc.rect(doc.x + 320, doc.y - 19.5, 140, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             }else if(questionType === 'TrueFalse' && questionsOfType[0].type === 'TYPE 3'){
-              doc.rect(doc.x + 365, doc.y - 19.5, boxSize, boxSize)
+              doc.rect(doc.x + 320, doc.y - 19.5, boxSize, boxSize)
                 .lineWidth(boxLineWeight)
                 .stroke('#adb8af')
                 .strokeColor('black');
             }
-
 
             
             doc.fill('black')
@@ -2409,12 +2409,12 @@ app.get('/getquestionstypeandnumberandanswer/:tupcids/:uid', async (req, res) =>
 
 app.post('/results', async (req, res) => {
   try {
-    const { TUPCID, UID, questionType, RESULTS } = req.body;
+    const { TUPCID, UID, questionType, answers } = req.body;
 
     // Insert data into the database
     const query = `
       INSERT INTO results
-      (TUPCID, UID, questionType,RESULTS, results_takendate) 
+      (TUPCID, UID, questionType,answers, results_takendate) 
       VALUES (?, ?, ?,?, NOW())
     `;
 
@@ -2422,7 +2422,7 @@ app.post('/results', async (req, res) => {
       TUPCID || null,
       UID || null,
       JSON.stringify( questionType),
-      JSON.stringify(RESULTS), // Store RESULTS as JSON
+      JSON.stringify(answers), // Store RESULTS as JSON
     ];
 
     await connection.query(query, values);

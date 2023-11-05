@@ -18,7 +18,7 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
       const worker = await createWorker('eng');
       try {
         await worker.setParameters({
-          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ) ',
+          tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
         });
   
         for (let i = 0; i < 100; i++) {
@@ -64,8 +64,7 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
           );
         });
         
-      
-        
+         
         for (const line of resultsArray) {
           if (line.includes('TUPC')) {
             const match = line.match(/TUPC(\d{2})(\d{4})/);
@@ -84,9 +83,6 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
           return !line.includes('TUPC') && !line.includes('UID');
         });
         
-
-        
-        
         setTextArray(filteredResultsArray);
         setQuestionType(questionTypes);
         setRecognizedText(text);
@@ -101,23 +97,34 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
 
   const sendTextToServer = async () => {
     setIsSendingData(true);
+    const formattedQuestionTypes = questionType.map((type, index) => ({
+      type: `TYPE ${index + 1}`,
+      questionType: type,
+    }));
 
-   
+    const formattedAnswers = [];
+
+    for (let i = 0; i < textArray.length; i++) {
+      const answerType = `TYPE ${i + 1}`;
+      const answers = textArray[i];
+      formattedAnswers.push({ type: answerType, answers });
+    }
+
     try {
       const response = await axios.post('http://localhost:3001/results', {
         TUPCID,
         UID,
-        questionType,
-        RESULTS: textArray,
+        questionType: formattedQuestionTypes,
+        answers: formattedAnswers,
       });
-      console.log("send data:  ", textArray)
+
       console.log('Data sent to the server:', response.data);
       setLoadingProgress(100);
-      setLoadingText("COMPLETE")
-      setTimeout(() => {
-        setLoadingText(''); // Clear the loading text after 5 seconds
-      }, 5000);
+      setLoadingText('COMPLETE');
 
+      setTimeout(() => {
+        setLoadingText('');
+      }, 5000);
     } catch (error) {
       console.error('Error sending data to the server:', error);
     } finally {
@@ -129,6 +136,7 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
 
   const cancelAction = () => {
     setIsPopUpVisible(false);
+    setLoadingText('');
   }
 
   useEffect(() => {
@@ -148,7 +156,7 @@ function TesseractOCR({ Image, setLoading, setProgress }) {
         </div>
       )}
 
-{setLoading && (
+      {setLoading && (
         <div>
           {isSendingData ? 'Sending data to the server...' : loadingText}
         </div>
